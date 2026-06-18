@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LogFlux — Painel do Cliente</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --blue: #2F80ED;
+      --blue-light: #4AA3FF;
+      --teal: #3FD0C9;
+      --verde: #23D18B;
+      --cinza: #f5f2f0;
+      --cinza-dark: #3a3a3a;
+      --texto: #1a1a1a;
+      --muted: #666;
+      --branco: #ffffff;
+      --erro: #FF4757;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #0f1419 0%, #1a2333 100%);
+      color: var(--texto);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* LAYOUT PRINCIPAL */
+    .container {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      min-height: 100vh;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      background: linear-gradient(180deg, #1a2333 0%, #0f1419 100%);
+      border-right: 1px solid rgba(63, 208, 201, 0.15);
+      padding: 32px 24px;
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 280px;
+      height: 100vh;
+      overflow-y: auto;
+      color: #fff;
+    }
+
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 42px;
+      font-family: 'Oswald', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .sidebar-logo svg {
+      width: 32px;
+      height: 32px;
+      fill: var(--teal);
+    }
+
+    .sidebar-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .nav-item {
+      padding: 12px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s, color 0.3s;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.7);
+      border-left: 3px solid transparent;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .nav-item:hover {
+      background: rgba(63, 208, 201, 0.1);
+      color: #fff;
+    }
+
+    .nav-item.active {
+      background: rgba(63, 208, 201, 0.2);
+      color: var(--teal);
+      border-left-color: var(--teal);
+    }
+
+    .nav-icon {
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    .sidebar-bottom {
+      position: absolute;
+      bottom: 32px;
+      left: 24px;
+      right: 24px;
+    }
+
+    .user-info {
+      background: rgba(63, 208, 201, 0.1);
+      border: 1px solid rgba(63, 208, 201, 0.2);
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      text-align: center;
+      font-size: 12px;
+    }
+
+    .user-email {
+      color: var(--teal);
+      font-weight: 600;
+      margin-bottom: 4px;
+      word-break: break-all;
+    }
+
+    .logout-btn {
+      width: 100%;
+      padding: 10px;
+      background: rgba(255, 71, 87, 0.2);
+      color: #FF4757;
+      border: 1px solid rgba(255, 71, 87, 0.3);
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .logout-btn:hover {
+      background: rgba(255, 71, 87, 0.3);
+    }
+
+    /* MAIN CONTENT */
+    .main {
+      margin-left: 280px;
+      padding: 40px;
+    }
+
+    /* HEADER */
+    .page-header {
+      margin-bottom: 40px;
+    }
+
+    .page-title {
+      font-family: 'Oswald', sans-serif;
+      font-size: 32px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    .page-subtitle {
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 14px;
+    }
+
+    /* GRID DE CARDS */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+
+    .card {
+      background: linear-gradient(135deg, rgba(47, 128, 237, 0.1) 0%, rgba(63, 208, 201, 0.05) 100%);
+      border: 1px solid rgba(63, 208, 201, 0.2);
+      border-radius: 12px;
+      padding: 28px;
+      transition: transform 0.3s, border-color 0.3s;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(63, 208, 201, 0.4);
+    }
+
+    .card-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: rgba(255, 255, 255, 0.5);
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .card-value {
+      font-family: 'Oswald', sans-serif;
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--teal);
+      margin-bottom: 12px;
+    }
+
+    .card-detail {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    /* TABELAS */
+    .section {
+      margin-bottom: 40px;
+    }
+
+    .section-title {
+      font-family: 'Oswald', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .section-title::before {
+      content: '';
+      width: 4px;
+      height: 24px;
+      background: var(--teal);
+      border-radius: 2px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead {
+      background: rgba(63, 208, 201, 0.1);
+      border-bottom: 1px solid rgba(63, 208, 201, 0.2);
+    }
+
+    th {
+      padding: 16px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--teal);
+    }
+
+    td {
+      padding: 16px;
+      border-bottom: 1px solid rgba(63, 208, 201, 0.1);
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 14px;
+    }
+
+    tbody tr:hover {
+      background: rgba(63, 208, 201, 0.05);
+    }
+
+    /* STATUS BADGES */
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-ativo {
+      background: rgba(35, 209, 139, 0.2);
+      color: var(--verde);
+    }
+
+    .badge-pendente {
+      background: rgba(255, 152, 0, 0.2);
+      color: #FF9800;
+    }
+
+    .badge-confirmado {
+      background: rgba(35, 209, 139, 0.2);
+      color: var(--verde);
+    }
+
+    /* BOTÕES */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--verde);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(35, 209, 139, 0.4);
+    }
+
+    /* LOADING */
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(63, 208, 201, 0.2);
+      border-top-color: var(--teal);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 1024px) {
+      .container {
+        grid-template-columns: 240px 1fr;
+      }
+
+      .sidebar {
+        width: 240px;
+      }
+
+      .main {
+        margin-left: 240px;
+        padding: 24px;
+      }
+
+      .cards-grid {
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      }
+
+      .page-title {
+        font-size: 24px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        padding: 20px;
+        border-right: none;
+        border-bottom: 1px solid rgba(63, 208, 201, 0.15);
+      }
+
+      .main {
+        margin-left: 0;
+        padding: 20px;
+      }
+
+      .sidebar-bottom {
+        position: static;
+        margin-top: 20px;
+      }
+
+      .cards-grid {
+        grid-template-columns: 1fr;
+      }
+
+      table {
+        font-size: 12px;
+      }
+
+      th, td {
+        padding: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 12h12m-6-6v12M3 3h18a2 2 0 012 2v14a2 2 0 01-2 2H3a2 2 0 01-2-2V5a2 2 0 012-2z"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        LogFlux
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-item active" data-page="dashboard">
+          <span class="nav-icon">📊</span>
+          Dashboard
+        </div>
+        <div class="nav-item" data-page="vendas">
+          <span class="nav-icon">💰</span>
+          Vendas
+        </div>
+        <div class="nav-item" data-page="pagamentos">
+          <span class="nav-icon">💳</span>
+          Pagamentos
+        </div>
+        <div class="nav-item" data-page="assinatura">
+          <span class="nav-icon">📋</span>
+          Assinatura
+        </div>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <div class="user-info">
+          <div class="user-email" id="userEmail">—</div>
+          <div style="font-size: 11px; color: rgba(255,255,255,0.5);">Cliente</div>
+        </div>
+        <button class="logout-btn" onclick="logout()">Sair</button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main">
+      <!-- DASHBOARD -->
+      <div id="page-dashboard" class="page">
+        <div class="page-header">
+          <h1 class="page-title">Dashboard</h1>
+          <p class="page-subtitle">Acompanhe suas métricas e informações em tempo real</p>
+        </div>
+
+        <div class="cards-grid">
+          <div class="card">
+            <div class="card-label">Total em Vendas</div>
+            <div class="card-value" id="totalVendas">R$ 0,00</div>
+            <div class="card-detail">Últimos 30 dias</div>
+          </div>
+          <div class="card">
+            <div class="card-label">Pagamentos Confirmados</div>
+            <div class="card-value" id="pagamentosConfirmados">R$ 0,00</div>
+            <div class="card-detail">Recebidos</div>
+          </div>
+          <div class="card">
+            <div class="card-label">Vendas Pendentes</div>
+            <div class="card-value" id="vendaePendentes">R$ 0,00</div>
+            <div class="card-detail">Aguardando pagamento</div>
+          </div>
+          <div class="card">
+            <div class="card-label">Seu Plano</div>
+            <div class="card-value" id="planoNome">—</div>
+            <div class="card-detail">Ativo desde hoje</div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2 class="section-title">Últimas Vendas</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Descrição</th>
+                <th>Valor</th>
+                <th>Data</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="vendas-tbody">
+              <tr><td colspan="5" style="text-align:center;color:rgba(255,255,255,0.5)">Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- VENDAS -->
+      <div id="page-vendas" class="page" style="display:none;">
+        <div class="page-header">
+          <h1 class="page-title">Vendas</h1>
+          <p class="page-subtitle">Gerencie todas as suas vendas e pedidos</p>
+        </div>
+
+        <div class="section">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Descrição</th>
+                <th>Valor</th>
+                <th>Data</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="all-vendas-tbody">
+              <tr><td colspan="5" style="text-align:center;color:rgba(255,255,255,0.5)">Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PAGAMENTOS -->
+      <div id="page-pagamentos" class="page" style="display:none;">
+        <div class="page-header">
+          <h1 class="page-title">Pagamentos</h1>
+          <p class="page-subtitle">Acompanhe todos os seus pagamentos</p>
+        </div>
+
+        <div class="section">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Venda</th>
+                <th>Valor Pago</th>
+                <th>Data</th>
+                <th>Método</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="pagamentos-tbody">
+              <tr><td colspan="6" style="text-align:center;color:rgba(255,255,255,0.5)">Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ASSINATURA -->
+      <div id="page-assinatura" class="page" style="display:none;">
+        <div class="page-header">
+          <h1 class="page-title">Sua Assinatura</h1>
+          <p class="page-subtitle">Informações do seu plano e assinatura</p>
+        </div>
+
+        <div class="section">
+          <div style="background: rgba(63,208,201,0.1); border: 1px solid rgba(63,208,201,0.2); border-radius: 12px; padding: 28px;">
+            <div style="margin-bottom: 24px;">
+              <div style="font-size: 12px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px;">Plano Atual</div>
+              <div style="font-size: 28px; font-weight: 700; color: var(--teal); margin-bottom: 8px;" id="assinatura-plano">—</div>
+              <div style="color: rgba(255,255,255,0.7);" id="assinatura-descricao">—</div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; margin-top: 24px;">
+              <div>
+                <div style="font-size: 12px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Data de Início</div>
+                <div style="color: rgba(255,255,255,0.9); font-weight: 500;" id="assinatura-inicio">—</div>
+              </div>
+              <div>
+                <div style="font-size: 12px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Status</div>
+                <div id="assinatura-status">—</div>
+              </div>
+              <div>
+                <div style="font-size: 12px; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Valor Mensal</div>
+                <div style="color: rgba(255,255,255,0.9); font-weight: 500;" id="assinatura-valor">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // CONFIGURAÇÃO SUPABASE
+    const SUPABASE_URL = 'https://cizpxkjzvfyewnlqhjzf.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNpenB4a2p6dmZ5ZXducWhqemYiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTczNDI4OTI2MiwiZXhwIjoxNzMxNjk3MjYyfQ.vw-XY9gNjQqVNCpXKBwqJ-A0gVKCWYaIQHo3cMH9b7g';
+
+    let currentUser = null;
+    let currentClienteId = null;
+
+    // INICIALIZAÇÃO
+    window.addEventListener('load', async () => {
+      await checkAuth();
+      setupNavigation();
+    });
+
+    // AUTENTICAÇÃO
+    async function checkAuth() {
+      const token = localStorage.getItem('supabase_token');
+      const userId = localStorage.getItem('user_id');
+
+      if (!token || !userId) {
+        // Redirecionar para login (você pode criar uma página de login)
+        window.location.href = '/logflux-login.html';
+        return;
+      }
+
+      currentUser = { id: userId };
+      document.getElementById('userEmail').textContent = localStorage.getItem('user_email') || userId;
+
+      // Buscar ID do cliente associado
+      await fetchClienteId(userId);
+      await loadDashboard();
+    }
+
+    async function fetchClienteId(userId) {
+      try {
+        const response = await fetch(
+          `${SUPABASE_URL}/rest/v1/acessos?usuario_id=eq.${userId}&select=cliente_id`,
+          {
+            headers: {
+              'apikey': SUPABASE_KEY,
+              'Authorization': `Bearer ${localStorage.getItem('supabase_token')}`
+            }
+          }
+        );
+
+        const data = await response.json();
+        if (data.length > 0) {
+          currentClienteId = data[0].cliente_id;
+        }
+      } catch (error) {
+        console.error('Erro ao buscar cliente:', error);
+      }
+    }
+
+    // NAVEGAÇÃO
+    function setupNavigation() {
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', () => {
+          document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+          item.classList.add('active');
+
+          const pageName = item.dataset.page;
+          document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+          document.getElementById(`page-${pageName}`).style.display = 'block';
+
+          if (pageName === 'vendas') loadVendas();
+          if (pageName === 'pagamentos') loadPagamentos();
+          if (pageName === 'assinatura') loadAssinatura();
+        });
+      });
+    }
+
+    // CARREGAR DASHBOARD
+    async function loadDashboard() {
+      if (!currentClienteId) return;
+
+      try {
+        // Vendas
+        const vendas = await fetch(
+          `${SUPABASE_URL}/rest/v1/vendas?cliente_id=eq.${currentClienteId}&limit=5`,
+          { headers: { 'apikey': SUPABASE_KEY } }
+        ).then(r => r.json());
+
+        const totalVendas = vendas.reduce((sum, v) => sum + (v.valor || 0), 0);
+        document.getElementById('totalVendas').textContent = `R$ ${totalVendas.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+
+        // Pagamentos
+        const pagamentos = await fetch(
+          `${SUPABASE_URL}/rest/v1/pagamentos?venda_id=in.(${vendas.map(v => v.id).join(',')})`,
+          { headers: { 'apikey': SUPABASE_KEY } }
+        ).then(r => r.json());
+
+        const pagConfirmados = pagamentos
+          .filter(p => p.status === 'confirmado')
+          .reduce((sum, p) => sum + (p.valor_pago || 0), 0);
+        document.getElementById('pagamentosConfirmados').textContent = `R$ ${pagConfirmados.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+
+        const vendePendentes = vendas
+          .filter(v => v.status === 'pendente')
+          .reduce((sum, v) => sum + (v.valor || 0), 0);
+        document.getElementById('vendaePendentes').textContent = `R$ ${vendePendentes.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+
+        // Assinatura
+        const assinatura = await fetch(
+          `${SUPABASE_URL}/rest/v1/assinaturas?cliente_id=eq.${currentClienteId}`,
+          { headers: { 'apikey': SUPABASE_KEY } }
+        ).then(r => r.json());
+
+        if (assinatura.length > 0) {
+          const planoId = assinatura[0].plano_id;
+          const plano = await fetch(
+            `${SUPABASE_URL}/rest/v1/planos?id=eq.${planoId}`,
+            { headers: { 'apikey': SUPABASE_KEY } }
+          ).then(r => r.json());
+
+          if (plano.length > 0) {
+            document.getElementById('planoNome').textContent = plano[0].nome;
+          }
+        }
+
+        // Renderizar tabela de vendas
+        const html = vendas.map(v => `
+          <tr>
+            <td>#${v.id}</td>
+            <td>${v.descricao || '—'}</td>
+            <td>R$ ${v.valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+            <td>${new Date(v.data_venda).toLocaleDateString('pt-BR')}</td>
+            <td><span class="badge badge-${v.status}">${v.status}</span></td>
+          </tr>
+        `).join('');
+
+        document.getElementById('vendas-tbody').innerHTML = html || '<tr><td colspan="5" style="text-align:center;color:rgba(255,255,255,0.5)">Nenhuma venda</td></tr>';
+      } catch (error) {
+        console.error('Erro ao carregar dashboard:', error);
+      }
+    }
+
+    async function loadVendas() {
+      if (!currentClienteId) return;
+
+      try {
+        const vendas = await fetch(
+          `${SUPABASE_URL}/rest/v1/vendas?cliente_id=eq.${currentClienteId}`,
+          { headers: { 'apikey': SUPABASE_KEY } }
+        ).then(r => r.json());
+
+        const html = vendas.map(v => `
+          <tr>
+            <td>#${v.id}</td>
+            <td>${v.descricao || '—'}</td>
+            <td>R$ ${v.valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+            <td>${new Date(v.data_venda).toLocaleDateString('pt-BR')}</td>
+            <td><span class="badge badge-${v.status}">${v.status}</span></td>
+          </tr>
+        `).join('');
+
+        document.getElementById('all-vendas-tbody').innerHTML = html || '<tr><td colspan="5">Nenhuma venda</td></tr>';
+      } catch (error) {
+        console.error('Erro:', error);
+      }
+    }
+
+    async function loadPagamentos() {
+      if (!currentClienteId) return;
+
+      try {
+        const vendas = await fetch(
+          `${SUPABASE_URL}/rest/v1/vendas?cliente_id=eq.${currentClienteId}&select=id`,
+          { headers: { 'apikey': SUPABASE_KEY } }
+        ).then(r => r.json());
+
+        const vendaIds = vendas.map(v => v.id).join(',');
+        if (!vendaIds) {
+          document.getElementById('pagamentos-tbody').innerHTML = '<tr><td colspan="6">Nenhum pagamento</td></tr>';
+          return;
+        }
+
+        const pagamentos = await fetch(
+          `${SUPABASE_URL}/rest/v1/pagamentos?venda_id=in.(${vendaIds})`,
+          { headers: { 'apikey': SUPABASE_KEY } }
+        ).then(r => r.json());
+
+        const html = pagamentos.map(p => `
+          <tr>
+            <td>#${p.id}</td>
+            <td>#${p.venda_id}</td>
+            <td>R$ ${p.valor_pago.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+            <td>${new Date(p.data_pagamento).toLocaleDateString('pt-BR')}</td>
+            <td>${p.metodo || '—'}</td>
+            <td><span class="badge badge-${p.status}">${p.status}</span></td>
+          </tr>
+        `).join('');
+
+        document.getElementById('pagamentos-tbody').innerHTML = html || '<tr><td colspan="6">Nenhum pagamento</td></tr>';
+      } catch (error) {
+        console.error('Erro:', error);
+      }
+    }
+
+    async function loadAssinatura() {
+      if (!currentClienteId) return;
+
+      try {
+        const assinatura = await fetch(
+          `${SUPABASE_URL}/rest/v1/assinaturas?cliente_id=eq.${currentClienteId}`,
+          { headers: { 'apikey': SUPABASE_KEY } }
+        ).then(r => r.json());
+
+        if (assinatura.length === 0) return;
+
+        const sub = assinatura[0];
+        const plano = await fetch(
+          `${SUPABASE_URL}/rest/v1/planos?id=eq.${sub.plano_id}`,
+          { headers: { 'apikey': SUPABASE_KEY } }
+        ).then(r => r.json());
+
+        if (plano.length > 0) {
+          const p = plano[0];
+          document.getElementById('assinatura-plano').textContent = p.nome;
+          document.getElementById('assinatura-descricao').textContent = p.descricao;
+          document.getElementById('assinatura-valor').textContent = `R$ ${p.preco.toLocaleString('pt-BR', {minimumFractionDigits: 0})}/mês`;
+        }
+
+        document.getElementById('assinatura-inicio').textContent = new Date(sub.data_inicio).toLocaleDateString('pt-BR');
+        document.getElementById('assinatura-status').innerHTML = `<span class="badge badge-${sub.status}">${sub.status}</span>`;
+      } catch (error) {
+        console.error('Erro:', error);
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('supabase_token');
+      localStorage.removeItem('user_id');
+      localStorage.removeItem('user_email');
+      window.location.href = '/logflux-login.html';
+    }
+  </script>
+</body>
+</html>
