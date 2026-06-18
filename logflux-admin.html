@@ -317,6 +317,9 @@
         <div class="nav-item active" data-page="dashboard">
           📈 Dashboard
         </div>
+        <div class="nav-item" data-page="cobranca">
+          💳 Cobrança/Vencimentos
+        </div>
         <div class="nav-item" data-page="usuarios">
           👥 Usuários Pendentes
         </div>
@@ -417,6 +420,48 @@
         </div>
       </div>
 
+      <!-- COBRANÇA/VENCIMENTOS -->
+      <div id="page-cobranca" class="page" style="display:none;">
+        <h1 class="page-title">Cobrança & Vencimentos</h1>
+
+        <div class="section">
+          <h2 class="section-title">Vendas Pendentes de Pagamento</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Empresa</th>
+                <th>Valor</th>
+                <th>Vencimento</th>
+                <th>Dias</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="cobranca-tbody">
+              <tr><td colspan="5" style="text-align:center;color:rgba(255,255,255,0.5)">Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="section">
+          <h2 class="section-title">Mensagem WhatsApp Pronta (Copiar & Colar)</h2>
+          <div style="background: rgba(35,209,139,0.1); border: 1px solid rgba(35,209,139,0.3); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+            <div style="color: rgba(255,255,255,0.7); font-size: 12px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">Mensagem Gerada</div>
+            <textarea id="msg-whatsapp" style="width: 100%; height: 120px; background: rgba(255,255,255,0.05); border: 1px solid rgba(63,208,201,0.2); border-radius: 6px; color: #fff; padding: 12px; font-family: monospace; resize: none;" readonly>
+Olá! 👋
+
+Segue detalhes do pagamento pendente:
+💰 Valor: R$ 0,00
+📅 Vencimento: --/--/----
+🔗 PIX: (configure no painel)
+
+Será que consegue pagar hoje? 🙏
+            </textarea>
+            <button onclick="copiarMensagem()" style="margin-top: 12px; padding: 10px 20px; background: var(--verde); color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">📋 Copiar Mensagem</button>
+            <button onclick="abrirWhatsApp()" style="margin-top: 12px; margin-left: 8px; padding: 10px 20px; background: #25D366; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">📱 Abrir WhatsApp</button>
+          </div>
+        </div>
+      </div>
+
       <!-- VENDAS -->
       <div id="page-vendas" class="page" style="display:none;">
         <h1 class="page-title">Todas as Vendas</h1>
@@ -475,6 +520,7 @@
           document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
           document.getElementById(`page-${pageName}`).style.display = 'block';
 
+          if (pageName === 'cobranca') await loadCobranca();
           if (pageName === 'usuarios') await loadUsuariosPendentes();
           if (pageName === 'clientes') await loadClientes();
           if (pageName === 'vendas') await loadVendas();
@@ -635,6 +681,82 @@
       } catch (error) {
         alert('❌ Erro ao rejeitar: ' + error.message);
       }
+    }
+
+    async function loadCobranca() {
+      try {
+        // Buscar vendas pendentes
+        const vendas = await fetch(
+          `${SUPABASE_URL}/rest/v1/vendas?status=eq.pendente`,
+          { headers: { 'apikey': SUPABASE_KEY } }
+        ).then(r => r.json()).catch(() => []);
+
+        // Buscar clientes para associar
+        const clientes = await fetch(
+          `${SUPABASE_URL}/rest/v1/clientes`,
+          { headers: { 'apikey': SUPABASE_KEY } }
+        ).then(r => r.json()).catch(() => []);
+
+        const clienteMap = {};
+        clientes.forEach(c => clienteMap[c.id] = c);
+
+        const html = vendas.map(v => {
+          const cliente = clienteMap[v.cliente_id];
+          const hoje = new Date();
+          const vencimento = new Date(v.data_venda);
+          vencimento.setMonth(vencimento.getMonth() + 1);
+          const diasRestantes = Math.ceil((vencimento - hoje) / (1000 * 60 * 60 * 24));
+          const statusCor = diasRestantes < 0 ? 'var(--erro)' : diasRestantes < 5 ? '#FF9800' : 'var(--verde)';
+
+          return `
+            <tr>
+              <td>${cliente?.nome_empresa || '—'}</td>
+              <td>R$ ${v.valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+              <td>${vencimento.toLocaleDateString('pt-BR')}</td>
+              <td style="color: ${statusCor}; font-weight: 600;">${diasRestantes} dias</td>
+              <td>
+                <button class="btn btn-aprove" onclick="gerarMensagem('${cliente?.nome_empresa || 'Cliente'}', ${v.valor}, '${vencimento.toLocaleDateString('pt-BR')}', '${cliente?.email || ''}')">
+                  📱 Mensagem
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+        document.getElementById('cobranca-tbody').innerHTML = html || '<tr><td colspan="5">Nenhuma cobrança pendente</td></tr>';
+      } catch (error) {
+        console.error('Erro:', error);
+      }
+    }
+
+    function gerarMensagem(empresa, valor, vencimento, email) {
+      const mensagem = `Olá! 👋
+
+Segue detalhes do pagamento pendente:
+💰 Valor: R$ ${valor.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+📅 Vencimento: ${vencimento}
+🏢 Empresa: ${empresa}
+
+🔗 PIX: (configure no painel admin)
+
+Será que consegue pagar hoje? 🙏
+
+---
+LogFlux — Logística que flui`;
+
+      document.getElementById('msg-whatsapp').value = mensagem;
+    }
+
+    function copiarMensagem() {
+      const msg = document.getElementById('msg-whatsapp');
+      msg.select();
+      document.execCommand('copy');
+      alert('✅ Mensagem copiada! Agora é só colar no WhatsApp');
+    }
+
+    function abrirWhatsApp() {
+      const msg = encodeURIComponent(document.getElementById('msg-whatsapp').value);
+      window.open(`https://wa.me/?text=${msg}`, '_blank');
     }
 
     function logout() {
